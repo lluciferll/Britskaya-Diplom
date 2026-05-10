@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import type { CookieOptions } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
+import { supabaseCookieOptions } from "@/lib/supabase/cookieOptions";
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
@@ -13,6 +14,7 @@ export async function updateSession(request: NextRequest) {
 
   // Перегрузка get/set/remove — стабильно проходит проверку типов в @supabase/ssr 0.8.x
   const supabase = createServerClient(url, anon, {
+    cookieOptions: supabaseCookieOptions(),
     cookies: {
       get(name: string) {
         return request.cookies.get(name)?.value ?? null;

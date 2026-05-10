@@ -14,8 +14,9 @@ export function AuthToolbar() {
     const supabase = createClient();
     let cancelled = false;
 
-    void supabase.auth.getUser().then(({ data }) => {
-      if (!cancelled) setEmail(data.user?.email ?? null);
+    /* getSession берёт состояние из хранилища SDK (куки после SSR); меньше «ложных разлогинов» после навигации, чем сразу getUser(). */
+    void supabase.auth.getSession().then(({ data }) => {
+      if (!cancelled) setEmail(data.session?.user?.email ?? null);
     });
 
     const {

@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import type { CookieOptions } from "@supabase/ssr";
+import { supabaseCookieOptions } from "@/lib/supabase/cookieOptions";
 import { type NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
@@ -13,6 +14,7 @@ export async function GET(request: NextRequest) {
   // Route handlers: deprecated get/set/remove overload чётко выбирается TypeScript’ом
   // (getAll/setAll дают конфликт перегрузок в этой версии @supabase/ssr).
   const supabase = createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
+    cookieOptions: supabaseCookieOptions(),
     cookies: {
       get(name: string) {
         return request.cookies.get(name)?.value ?? null;
