@@ -1,0 +1,23 @@
+# Из каталога проекта:
+#   создай файл .env рядом с этим файлом с переменными из .env.example (ключи Supabase),
+#   затем:
+#   docker compose build
+#   docker compose up
+# http://localhost:3050
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+        # Как ты открываешь сайт в браузере (не 0.0.0.0 из лога контейнера).
+        NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-http://localhost:3050}
+    ports: ["3050:3000"]
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+      NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-http://localhost:3050}
+    restart: unless-stopped
