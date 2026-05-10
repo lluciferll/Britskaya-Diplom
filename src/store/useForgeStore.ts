@@ -21,6 +21,7 @@ import type {
 import { applyForgeModulesPatch, defaultForgeModules } from "@/domain/forgeModules";
 import type { CampaignForgeModules } from "@/domain/forgeModules";
 import { BACKUP_FORMAT, SINGLE_FORMAT, ensureImportedCampaign, parseBackupJson } from "@/lib/campaignBackup";
+import { FORGE_LS_KEY } from "@/lib/forgeStorageConstants";
 import { slugifyWikiTitle } from "@/lib/wikiLinking";
 import { newId } from "@/lib/id";
 
@@ -876,7 +877,7 @@ export const useForgeStore = create<ForgeState>()(
       },
     }),
     {
-      name: "master-forge:v5",
+      name: FORGE_LS_KEY,
       storage: createJSONStorage(() => localStorage),
       version: 5,
       migrate: (persisted, version) => {

@@ -3,6 +3,11 @@
 import type { ReactNode } from "react";
 import { useEffect, useRef } from "react";
 import { mergeCampaignLists } from "@/lib/campaignsMerge";
+import {
+  readLastSyncedAuthUid,
+  wipeForgeCampaignsPersistAndMemory,
+  writeLastSyncedAuthUid,
+} from "@/lib/forgeLocalAuth";
 import { deleteCampaignRow, fetchCampaignPayloads, upsertCampaignRow } from "@/lib/supabase/campaignRows";
 import { createClient } from "@/lib/supabase/client";
 import { useForgeStore } from "@/store/useForgeStore";
@@ -31,6 +36,10 @@ export function CampaignCloudSync({ children }: { children: ReactNode }) {
       const ticket = hydrationRound.current;
       suppressSync.current = true;
       try {
+        const prevSynced = readLastSyncedAuthUid();
+        if (prevSynced !== null && prevSynced !== userId) {
+          wipeForgeCampaignsPersistAndMemory();
+        }
         const remote = await fetchCampaignPayloads();
         if (ticket !== hydrationRound.current) return;
         const local = useForgeStore.getState().campaigns;
@@ -38,6 +47,7 @@ export function CampaignCloudSync({ children }: { children: ReactNode }) {
         useForgeStore.setState({ campaigns: merged });
         prevCampaignIdsRef.current = new Set(merged.map((c) => c.id));
         await flushUpserts(userId);
+        writeLastSyncedAuthUid(userId);
       } catch (e) {
         console.warn("[campaigns cloud] hydrate", e);
       } finally {
