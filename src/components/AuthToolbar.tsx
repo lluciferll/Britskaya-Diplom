@@ -37,7 +37,7 @@ export function AuthToolbar() {
       const supabase = createClient();
       await supabase.auth.signOut();
       setEmail(null);
-      router.refresh();
+      router.replace("/login");
     } finally {
       setBusy(false);
     }
