@@ -1,0 +1,4 @@
+# Unix LF в env-файлах — иначе Docker на Windows падает при сборке.
+.env.production text eol=lf
+.env.production.example text eol=lf
+.env.example text eol=lf

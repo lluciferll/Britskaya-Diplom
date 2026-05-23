@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { AppShell } from "@/components/AppShell";
+import { ForgePage } from "@/components/ForgePage";
 import { rollLootTier, type LootTier } from "@/lib/loot";
 
 const TIERS: { key: LootTier; title: string; hint: string }[] = [
@@ -16,18 +16,13 @@ export default function LootToolPage() {
   const [last, setLast] = useState<ReturnType<typeof rollLootTier> | null>(null);
 
   return (
-    <AppShell
-      title="Добыча (импульс)"
-      kicker="За столом"
-      breadcrumb={[{ href: "/tools", label: "За столом" }]}
-      subtitle="Один клик — монеты через кости и текстовая зацепка. Вставляете свой лор экономики самостоятельно; это намёки, не лут из книги правил."
-    >
+    <ForgePage title="Добыча" kicker="За столом" subtitle="Монеты и текстовые зацепки одним кликом.">
       <div className="forge-sheet mt-6 p-6">
         <p className="forge-muted text-sm leading-relaxed">
           Монетные суммы через кубики и текстовые зацепки. Не таблицы издателя — смешиваете с экономикой мира и своими списками добычи.
         </p>
 
-        <div className="mt-6 grid gap-3 md:grid-cols-4">
+        <div className="mt-4 grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-4">
           {TIERS.map((t) => (
             <button
               key={t.key}
@@ -60,6 +55,6 @@ export default function LootToolPage() {
           </div>
         )}
       </div>
-    </AppShell>
+    </ForgePage>
   );
 }

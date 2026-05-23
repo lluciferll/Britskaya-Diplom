@@ -34,11 +34,13 @@ export const FORGE_MODULE_IDS = Object.keys(FORGE_MODULE_LABELS) as ForgeModuleI
 export function defaultForgeModules(): CampaignForgeModules {
   const m = {} as CampaignForgeModules;
   FORGE_MODULE_IDS.forEach((k) => {
-    /** Граф лора — узкая штука: по умолчанию выключен, чтобы вкладки были проще */
-    m[k] = k === "loreGraph" ? false : true;
+    m[k] = k === "sessionLogs" ? false : true;
   });
   return m;
 }
+
+/** Модули, которые не показываем в настройках кампании (устарели или скрыты). */
+export const HIDDEN_FORGE_MODULE_IDS: ForgeModuleId[] = ["sessionPlanner", "sessionLogs", "partyLibrary"];
 
 /** Слить сохранённые флаги с полным набором ключей и применить частичное обновление. */
 export function mergeForgeModules(patchFromSave?: Partial<CampaignForgeModules> | null): CampaignForgeModules {

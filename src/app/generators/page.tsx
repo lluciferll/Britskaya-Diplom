@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { AppShell } from "@/components/AppShell";
+import { ForgePage } from "@/components/ForgePage";
 
 const CARDS = [
   {
@@ -26,11 +26,7 @@ const CARDS = [
 
 export default function GeneratorsPage() {
   return (
-    <AppShell
-      title="Генераторы"
-      kicker="Быстрая помощь закадру"
-      subtitle="Готовые текстовые заготовки, чтобы не тормозить игру. Кнопка «в кампанию» есть у генератора NPC, если нужно сохранить в текущую запись."
-    >
+    <ForgePage title="Генераторы" kicker="Импровизация" subtitle="Текстовые заготовки для игры.">
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {CARDS.map((c) => (
           <Link
@@ -44,6 +40,6 @@ export default function GeneratorsPage() {
           </Link>
         ))}
       </div>
-    </AppShell>
+    </ForgePage>
   );
 }

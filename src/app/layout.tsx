@@ -20,7 +20,13 @@ const mono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: "Master Forge — мастерская мастера",
-  description: "Локальный MVP: кампании, генераторы, сессия и базовая карта для DM/GM.",
+  description: "Кампании, справка SRD, генераторы, сессия и карты для мастера настольных ролевых игр.",
+};
+
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover" as const,
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

@@ -1,6 +1,7 @@
 import { mergeForgeModules } from "@/domain/forgeModules";
 import type { Campaign } from "@/domain/types";
 import { slugifyWikiTitle } from "@/lib/wikiLinking";
+import { normalizeStatBlock } from "@/lib/characterStatBlock";
 
 const defaultHorror = () =>
   ({
@@ -101,6 +102,12 @@ export function ensureImportedCampaign(c: Campaign): Campaign {
     characters: (c.characters ?? []).map((ch) => ({
       ...ch,
       inspiration: ch.inspiration ?? false,
+      tags: typeof ch.tags === "string" ? ch.tags : undefined,
+      personality: typeof ch.personality === "string" ? ch.personality : undefined,
+      secret: typeof ch.secret === "string" ? ch.secret : undefined,
+      motivation: typeof ch.motivation === "string" ? ch.motivation : undefined,
+      statHint: typeof ch.statHint === "string" ? ch.statHint : undefined,
+      statBlock: ch.statBlock ? normalizeStatBlock(ch.statBlock) : undefined,
     })),
     quests: c.quests ?? [],
     sessionLogs: c.sessionLogs ?? [],
@@ -160,6 +167,8 @@ export function ensureImportedCampaign(c: Campaign): Campaign {
       gridPx: map?.gridPx ?? 48,
       showGrid: map?.showGrid ?? true,
       watabouCity: map?.watabouCity,
+      mapWorkspaceTab: map?.mapWorkspaceTab,
+      aideddAtlasKey: map?.aideddAtlasKey,
     },
   };
 }

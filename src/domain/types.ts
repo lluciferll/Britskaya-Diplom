@@ -1,5 +1,6 @@
 import type { CampaignForgeModules } from "@/domain/forgeModules";
 import type { WatabouCityParams } from "@/lib/watabouCityUrl";
+import type { AideddAtlasKey, MapWorkspaceTab } from "@/lib/aideddAtlas";
 
 export type TimelineEntry = {
   id: string;
@@ -25,11 +26,66 @@ export type LocationNode = {
   notes: string;
 };
 
+/** Блок особенности / действия в статблоке персонажа (D&D 5e). */
+export type StatBlockFeature = {
+  id: string;
+  name: string;
+  text: string;
+};
+
+export type StatBlockAbilities = {
+  str: number;
+  dex: number;
+  con: number;
+  int: number;
+  wis: number;
+  cha: number;
+};
+
+/** Расширенный статблок NPC/PC — по образцу редактора Aidedd. */
+export type CharacterStatBlock = {
+  creatureType?: string;
+  subtype?: string;
+  size?: string;
+  alignment?: string;
+  ac?: string;
+  hp?: string;
+  speed?: string;
+  abilities: StatBlockAbilities;
+  savingThrows?: string;
+  skills?: string;
+  damageVulnerabilities?: string;
+  damageResistances?: string;
+  damageImmunities?: string;
+  conditionImmunities?: string;
+  senses?: string;
+  passivePerception?: string;
+  languages?: string;
+  cr?: string;
+  proficiencyBonus?: string;
+  traits: StatBlockFeature[];
+  actions: StatBlockFeature[];
+  bonusActions: StatBlockFeature[];
+  reactions: StatBlockFeature[];
+  legendaryActions: StatBlockFeature[];
+  /** Описание существа / flavor-текст */
+  description?: string;
+};
+
 export type CampaignCharacter = {
   id: string;
   name: string;
   kind: "npc" | "pc";
   summary: string;
+  /** Теги: класс, раса, роль */
+  tags?: string;
+  personality?: string;
+  secret?: string;
+  motivation?: string;
+  /** Подсказка статов для мастера (D&D 5e) */
+  statHint?: string;
+  /** Полный статблок (механика боя) */
+  statBlock?: CharacterStatBlock;
   /** Партийный лист мастера (опционально) */
   currentHp?: number;
   maxHp?: number;
@@ -105,6 +161,10 @@ export type BattleMapState = {
   showGrid: boolean;
   /** Параметры встроенного генератора watabou (сохраняются с кампанией). */
   watabouCity?: WatabouCityParams;
+  /** Последняя вкладка на экране карты кампании. */
+  mapWorkspaceTab?: MapWorkspaceTab;
+  /** Выбранный атлас Aidedd (Faerûn, Sword Coast…). */
+  aideddAtlasKey?: AideddAtlasKey;
 };
 
 /** Статья вики внутри кампании ([[перекрёстные ссылки]]) */

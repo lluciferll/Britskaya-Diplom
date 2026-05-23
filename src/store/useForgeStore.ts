@@ -1,6 +1,7 @@
 "use client";
 
 import { create } from "zustand";
+import { recordCampaignDeleted } from "@/lib/forgeLocalAuth";
 import { persist, createJSONStorage } from "zustand/middleware";
 import type {
   BattleMapState,
@@ -208,7 +209,10 @@ export const useForgeStore = create<ForgeState>()(
         return camp.id;
       },
 
-      deleteCampaign: (id) => set((s) => ({ campaigns: s.campaigns.filter((c) => c.id !== id) })),
+      deleteCampaign: (id) => {
+        recordCampaignDeleted(id);
+        set((s) => ({ campaigns: s.campaigns.filter((c) => c.id !== id) }));
+      },
 
       updateCampaignMeta: (id, patch) =>
         set((s) => ({

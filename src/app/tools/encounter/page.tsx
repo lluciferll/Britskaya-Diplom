@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { AppShell } from "@/components/AppShell";
+import { ForgePage } from "@/components/ForgePage";
 import { encounterSummary, type DifficultyTier } from "@/lib/encounter5e";
 
 const tierRu: Record<DifficultyTier, string> = {
@@ -30,11 +30,10 @@ export default function ToolsEncounterPage() {
   const sum = useMemo(() => encounterSummary({ partyLevel, partySize, monsterCrs: crs }), [partyLevel, partySize, crs]);
 
   return (
-    <AppShell
+    <ForgePage
       title="Встреча по XP"
-      kicker="За столом · D&amp;D 5e"
-      breadcrumb={[{ href: "/tools", label: "За столом" }]}
-      subtitle="Вводите CR каждого монстра с новой строки. Таблицы XP и множителей — как в книге мастера (ориентир)."
+      kicker="D&D 5e"
+      subtitle="Вводите CR каждого монстра с новой строки."
     >
       <div className="grid gap-6 lg:grid-cols-2">
         <section className="forge-sheet p-6">
@@ -75,9 +74,6 @@ export default function ToolsEncounterPage() {
               />
             </label>
           </div>
-          <p className="forge-muted mt-4 text-[11px] leading-relaxed">
-            Пороги Easy / Medium / Hard / Deadly и XP за CR взяты из стандартных таблиц 5e. Это ориентир, а не замена здравому смыслу и чертам монстров.
-          </p>
         </section>
 
         <section className="forge-sheet p-6">
@@ -124,6 +120,6 @@ export default function ToolsEncounterPage() {
           )}
         </section>
       </div>
-    </AppShell>
+    </ForgePage>
   );
 }

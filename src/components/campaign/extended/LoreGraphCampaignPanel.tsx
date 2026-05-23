@@ -1,25 +1,37 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { buildLoreGraph } from "@/lib/loreGraph";
+import { buildLoreGraph, type LoreGraphNode } from "@/lib/loreGraph";
 import type { Campaign, LoreGraphManualEdge } from "@/domain/types";
 import { useForgeStore } from "@/store/useForgeStore";
 
+const SVG = 520;
+const CX = SVG / 2;
+const CY = SVG / 2;
+
 function layoutCircle(n: number, index: number): { x: number; y: number } {
-  const cx = 260;
-  const cy = 260;
-  const R = n <= 1 ? 0 : Math.min(175, 130 + n * 6);
+  const R = n <= 1 ? 0 : Math.min(200, 120 + n * 5);
   const a = (Math.PI * 2 * index) / Math.max(n, 1) - Math.PI / 2;
-  return { x: cx + R * Math.cos(a), y: cy + R * Math.sin(a) };
+  return { x: CX + R * Math.cos(a), y: CY + R * Math.sin(a) };
 }
 
-const KIND_COLOR: Record<LoreGraphManualEdge["fromKind"], string> = {
+const KIND_COLOR: Record<LoreGraphNode["kind"], string> = {
   wiki: "#0a0a0a",
   character: "#2563eb",
   location: "#16a34a",
   faction: "#9333ea",
   quest: "#ea580c",
 };
+
+const KIND_LABEL: Record<LoreGraphNode["kind"], string> = {
+  wiki: "Вики",
+  character: "Персонаж",
+  location: "Локация",
+  faction: "Фракция",
+  quest: "Квест",
+};
+
+type KindFilter = LoreGraphNode["kind"] | "all";
 
 export function LoreGraphCampaignPanel({ campaignId }: { campaignId: string }) {
   const campaign = useForgeStore((s) => s.campaigns.find((c) => c.id === campaignId) ?? null);
@@ -31,15 +43,33 @@ export function LoreGraphCampaignPanel({ campaignId }: { campaignId: string }) {
   const [toKind, setToKind] = useState<LoreGraphManualEdge["toKind"]>("wiki");
   const [toId, setToId] = useState("");
   const [edgeNote, setEdgeNote] = useState("");
+  const [kindFilter, setKindFilter] = useState<KindFilter>("all");
+  const [selectedUid, setSelectedUid] = useState<string | null>(null);
 
   const data = useMemo(() => (campaign ? buildLoreGraph(campaign as Campaign) : { nodes: [], edges: [] }), [campaign]);
+
+  const visibleNodes = useMemo(
+    () => (kindFilter === "all" ? data.nodes : data.nodes.filter((n) => n.kind === kindFilter)),
+    [data.nodes, kindFilter],
+  );
+
+  const visibleIds = useMemo(() => new Set(visibleNodes.map((n) => n.uid)), [visibleNodes]);
+
+  const visibleEdges = useMemo(
+    () => data.edges.filter((e) => visibleIds.has(e.from) && visibleIds.has(e.to)),
+    [data.edges, visibleIds],
+  );
+
   const coords = useMemo(() => {
     const m = new Map<string, { x: number; y: number }>();
-    data.nodes.forEach((n, i) => {
-      m.set(n.uid, layoutCircle(data.nodes.length, i));
-    });
+    visibleNodes.forEach((n, i) => m.set(n.uid, layoutCircle(visibleNodes.length, i)));
     return m;
-  }, [data.nodes]);
+  }, [visibleNodes]);
+
+  const connected = useMemo(() => {
+    if (!selectedUid) return [];
+    return visibleEdges.filter((e) => e.from === selectedUid || e.to === selectedUid);
+  }, [selectedUid, visibleEdges]);
 
   if (!campaign) return <p className="forge-muted">Кампания не найдена.</p>;
 
@@ -61,66 +91,156 @@ export function LoreGraphCampaignPanel({ campaignId }: { campaignId: string }) {
   };
 
   const labelFor = (kind: LoreGraphManualEdge["fromKind"], id: string) => {
-    if (kind === "wiki") {
-      return (campaign.wikiArticles ?? []).find((w) => w.slug === id)?.title ?? id;
-    }
+    if (kind === "wiki") return (campaign.wikiArticles ?? []).find((w) => w.slug === id)?.title ?? id;
     const list = idOptions(kind);
     const hit = list.find((x: { id?: string }) => x.id === id);
     if (!hit) return id;
     return (hit as { name?: string; title?: string }).name ?? (hit as { title?: string }).title ?? id;
   };
 
+  const selectedNode = selectedUid ? data.nodes.find((n) => n.uid === selectedUid) : null;
+
   return (
     <div className="space-y-6">
-      <div className="forge-inset text-[12px] leading-relaxed forge-muted">
-        Каждый узел — сущность вашей кампании. Пунктирные связи появляются когда имя локации или персонажа упоминается текстом внутри вики-статьи без скобок{" "}
-        <span className="font-mono text-[var(--tt-fg)]">[[ ]]</span>. Сплошные связи — синтаксис статей или ручные добавления ниже.
-        <strong className="block pt-2 text-[var(--tt-fg)]">
-          Большие кампании пока визуализируются упрощённым кругом без физического «рыхления» — это намеренный упрощённый MVP.
-        </strong>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="font-mono text-[11px] forge-muted">
+          {visibleNodes.length} узлов · {visibleEdges.length} связей
+        </p>
+        <div className="flex flex-wrap gap-2" role="group" aria-label="Фильтр типа узла">
+          <button
+            type="button"
+            className={kindFilter === "all" ? "forge-tab forge-tab-active" : "forge-tab"}
+            onClick={() => setKindFilter("all")}
+          >
+            Все
+          </button>
+          {(Object.keys(KIND_LABEL) as LoreGraphNode["kind"][]).map((k) => (
+            <button
+              key={k}
+              type="button"
+              className={kindFilter === k ? "forge-tab forge-tab-active" : "forge-tab"}
+              onClick={() => setKindFilter(k)}
+            >
+              {KIND_LABEL[k]}
+            </button>
+          ))}
+        </div>
       </div>
 
-      <div className="overflow-x-auto border border-dotted border-[var(--tt-line-strong)] bg-[var(--tt-bg-elev)]">
-        <svg width={520} height={520} aria-label="Граф лора">
-          <title>Граф лора кампании</title>
-          {data.edges.map((e) => {
-            const a = coords.get(e.from);
-            const b = coords.get(e.to);
-            if (!a || !b) return null;
-            const k = e.from.split(":")[0] as LoreGraphManualEdge["fromKind"];
-            const color = KIND_COLOR[k] ?? "#0a0a0a";
-            return (
-              <line
-                key={`${e.from}-${e.to}`}
-                x1={a.x}
-                y1={a.y}
-                x2={b.x}
-                y2={b.y}
-                stroke={color}
-                strokeWidth={e.dashed ? 0.85 : 1.3}
-                strokeOpacity={0.45}
-                strokeDasharray={e.dashed ? "4 4" : undefined}
-              />
-            );
-          })}
-          {data.nodes.map((n) => {
-            const p = coords.get(n.uid);
-            if (!p) return null;
-            const fill = KIND_COLOR[n.kind];
-            return (
-              <g key={n.uid}>
-                <circle cx={p.x} cy={p.y} r={9} fill={fill} />
-                <text x={p.x + 12} y={p.y + 4} className="fill-[var(--tt-fg)] text-[9px] uppercase" style={{ fontFamily: "var(--font-geist-mono)" }}>
-                  {n.label.length > 26 ? `${n.label.slice(0, 24)}…` : n.label}
-                </text>
-              </g>
-            );
-          })}
-        </svg>
+      <div className="flex flex-wrap gap-4 text-[10px] font-mono uppercase tracking-wider forge-muted">
+        {(Object.keys(KIND_LABEL) as LoreGraphNode["kind"][]).map((k) => (
+          <span key={k} className="inline-flex items-center gap-1.5">
+            <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: KIND_COLOR[k] }} />
+            {KIND_LABEL[k]}
+          </span>
+        ))}
+        <span className="inline-flex items-center gap-1.5">
+          <span className="inline-block h-px w-4 border-t border-dashed border-[var(--tt-fg)] opacity-50" />
+          упоминание
+        </span>
       </div>
+
+      {visibleNodes.length === 0 ? (
+        <p className="forge-muted text-sm">Нет узлов для отображения. Добавьте персонажей, локации, квесты или статьи вики.</p>
+      ) : (
+        <div className="w-full overflow-x-auto border border-dotted border-[var(--tt-line)] bg-[var(--tt-bg-elev)]">
+          <svg
+            viewBox={`0 0 ${SVG} ${SVG}`}
+            width="100%"
+            height="auto"
+            style={{ minHeight: "min(72vw, 320px)", maxWidth: SVG }}
+            aria-label="Граф связей кампании"
+            className="mx-auto block"
+            preserveAspectRatio="xMidYMid meet"
+          >
+            <title>Граф связей</title>
+            {visibleEdges.map((e) => {
+              const a = coords.get(e.from);
+              const b = coords.get(e.to);
+              if (!a || !b) return null;
+              const highlighted = selectedUid && (e.from === selectedUid || e.to === selectedUid);
+              const k = e.from.split(":")[0] as LoreGraphNode["kind"];
+              return (
+                <line
+                  key={`${e.from}-${e.to}-${e.label}`}
+                  x1={a.x}
+                  y1={a.y}
+                  x2={b.x}
+                  y2={b.y}
+                  stroke={KIND_COLOR[k] ?? "#0a0a0a"}
+                  strokeWidth={highlighted ? 2 : e.dashed ? 0.85 : 1.3}
+                  strokeOpacity={highlighted ? 0.85 : 0.4}
+                  strokeDasharray={e.dashed ? "4 4" : undefined}
+                />
+              );
+            })}
+            {visibleNodes.map((n) => {
+              const p = coords.get(n.uid);
+              if (!p) return null;
+              const active = selectedUid === n.uid;
+              return (
+                <g
+                  key={n.uid}
+                  className="cursor-pointer"
+                  onClick={() => setSelectedUid((u) => (u === n.uid ? null : n.uid))}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(ev) => {
+                    if (ev.key === "Enter" || ev.key === " ") {
+                      ev.preventDefault();
+                      setSelectedUid((u) => (u === n.uid ? null : n.uid));
+                    }
+                  }}
+                >
+                  <circle
+                    cx={p.x}
+                    cy={p.y}
+                    r={active ? 12 : 9}
+                    fill={KIND_COLOR[n.kind]}
+                    stroke={active ? "var(--tt-fg)" : "transparent"}
+                    strokeWidth={2}
+                  />
+                  <text
+                    x={p.x + 14}
+                    y={p.y + 4}
+                    className="fill-[var(--tt-fg)] text-[9px] uppercase pointer-events-none"
+                    style={{ fontFamily: "var(--font-geist-mono)" }}
+                  >
+                    {n.label.length > 22 ? `${n.label.slice(0, 20)}…` : n.label}
+                  </text>
+                </g>
+              );
+            })}
+          </svg>
+        </div>
+      )}
+
+      {selectedNode && (
+        <div className="forge-inset p-4 text-sm">
+          <p className="forge-label">{KIND_LABEL[selectedNode.kind]}</p>
+          <p className="mt-1 font-semibold">{selectedNode.label}</p>
+          {connected.length > 0 ? (
+            <ul className="mt-3 space-y-1 text-[12px] forge-muted">
+              {connected.map((e) => {
+                const other = e.from === selectedUid ? e.to : e.from;
+                const otherNode = data.nodes.find((n) => n.uid === other);
+                return (
+                  <li key={`${e.from}-${e.to}`}>
+                    {e.dashed ? "··· " : "— "}
+                    {otherNode?.label ?? other}
+                    {e.label ? ` (${e.label})` : ""}
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <p className="mt-2 text-[12px] forge-muted">Связей с другими узлами нет.</p>
+          )}
+        </div>
+      )}
 
       <section className="forge-inset space-y-4 p-4">
-        <h3 className="forge-label">Ручная связь (если автоматика не поймала)</h3>
+        <h3 className="forge-label">Ручная связь</h3>
         <div className="grid gap-3 md:grid-cols-2">
           <label className="text-sm">
             <span className="forge-label">От ({fromKind})</span>
@@ -135,10 +255,9 @@ export function LoreGraphCampaignPanel({ campaignId }: { campaignId: string }) {
               <option value="">— выберите —</option>
               {idOptions(fromKind).map((row) => {
                 const val = fromKind === "wiki" ? (row as { slug: string }).slug : (row as { id: string }).id;
-                const lbl = labelFor(fromKind, val);
                 return (
                   <option key={val} value={val}>
-                    {lbl}
+                    {labelFor(fromKind, val)}
                   </option>
                 );
               })}
@@ -157,10 +276,9 @@ export function LoreGraphCampaignPanel({ campaignId }: { campaignId: string }) {
               <option value="">— выберите —</option>
               {idOptions(toKind).map((row) => {
                 const val = toKind === "wiki" ? (row as { slug: string }).slug : (row as { id: string }).id;
-                const lbl = labelFor(toKind, val);
                 return (
                   <option key={val} value={val}>
-                    {lbl}
+                    {labelFor(toKind, val)}
                   </option>
                 );
               })}
@@ -168,7 +286,7 @@ export function LoreGraphCampaignPanel({ campaignId }: { campaignId: string }) {
           </label>
         </div>
         <label className="block text-sm">
-          <span className="forge-label">Подпись на линию (опционально)</span>
+          <span className="forge-label">Подпись (опционально)</span>
           <input value={edgeNote} onChange={(e) => setEdgeNote(e.target.value)} className="forge-field mt-2" />
         </label>
         <button
@@ -180,7 +298,7 @@ export function LoreGraphCampaignPanel({ campaignId }: { campaignId: string }) {
             setEdgeNote("");
           }}
         >
-          Добавить ребро вручную
+          Добавить связь
         </button>
         <ul className="space-y-2 text-[11px] forge-muted">
           {(campaign.loreGraphExtras ?? []).map((edge) => (

@@ -12,7 +12,8 @@ const SECTIONS: { heading: string; links: PaletteLink[] }[] = [
       { href: "/", label: "Главная", hint: "на старт" },
       { href: "/login", label: "Вход", hint: "аккаунт Supabase" },
       { href: "/campaigns", label: "Все кампании", hint: "список и бэкапы" },
-      { href: "/lore", label: "Справка SRD", hint: "только чтение, открытые правила" },
+      { href: "/lore", label: "Справка SRD", hint: "разделы и поиск, русский SRD" },
+      { href: "/atlas", label: "Атлас Faerûn", hint: "интерактивная карта Aidedd" },
     ],
   },
   {
@@ -23,6 +24,7 @@ const SECTIONS: { heading: string; links: PaletteLink[] }[] = [
       { href: "/tools/encounter", label: "Встреча по XP", hint: "сложность боя 5e" },
       { href: "/tools/loot", label: "Добыча", hint: "награда на скорую руку" },
       { href: "/tools/encounter-builder", label: "Столкновения в кампании", hint: "монстры и оценка боя" },
+      { href: "/character-creator", label: "Конструктор персонажа", hint: "листы P1–P3 и PNG" },
       { href: "/reference", label: "Шпаргалка мастера", hint: "состояния и DC" },
     ],
   },
@@ -60,7 +62,7 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
 
   return (
     <div
-      className="fixed inset-0 z-[60] flex items-start justify-center bg-[var(--tt-fg)]/25 p-4 pt-[8vh]"
+      className="fixed inset-0 z-[60] flex items-start justify-center bg-[var(--tt-fg)]/25 p-3 pt-[6vh] sm:p-4 sm:pt-[8vh]"
       role="dialog"
       aria-modal="true"
       aria-label="Быстрый переход"
@@ -95,11 +97,11 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
                     key={l.href}
                     href={l.href}
                     onClick={onClose}
-                    className="flex items-center justify-between gap-3 border-b border-dotted border-[var(--tt-line)] px-3 py-3 font-mono text-sm hover:bg-[var(--tt-bg-elev)]"
+                    className="flex flex-col gap-1 border-b border-dotted border-[var(--tt-line)] px-3 py-3 font-mono text-sm hover:bg-[var(--tt-bg-elev)] sm:flex-row sm:items-center sm:justify-between sm:gap-3"
                   >
                     <span className="font-medium text-[var(--tt-fg)]">{l.label}</span>
                     {l.hint ? (
-                      <span className="forge-muted max-w-[13rem] shrink-0 text-right text-[10px] uppercase tracking-[0.1em]">{l.hint}</span>
+                      <span className="forge-muted text-[10px] uppercase tracking-[0.1em] sm:max-w-[13rem] sm:shrink-0 sm:text-right">{l.hint}</span>
                     ) : (
                       <span className="forge-muted shrink-0 text-[10px] uppercase opacity-60">перейти</span>
                     )}

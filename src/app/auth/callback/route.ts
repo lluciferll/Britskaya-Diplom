@@ -6,7 +6,7 @@ import { type NextRequest, NextResponse } from "next/server";
 export async function GET(request: NextRequest) {
   const origin = request.nextUrl.origin;
   const nextSearch = request.nextUrl.searchParams.get("next");
-  const nextPath = nextSearch && nextSearch.startsWith("/") ? nextSearch : "/";
+  const nextPath = nextSearch && nextSearch.startsWith("/") ? nextSearch : "/campaigns";
 
   const redirectUrl = new URL(nextPath, origin);
   const response = NextResponse.redirect(redirectUrl);

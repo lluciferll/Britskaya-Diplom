@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { AppShell } from "@/components/AppShell";
+import { ForgePage } from "@/components/ForgePage";
 import { generateEvent, type Danger, type EventContext, type TimeOfDay } from "@/lib/generators/events";
 
 const CONTEXTS: { value: EventContext; label: string }[] = [
@@ -13,6 +13,8 @@ const CONTEXTS: { value: EventContext; label: string }[] = [
   { value: "castle", label: "Замок / особняк" },
   { value: "sea", label: "Море / порт" },
   { value: "space_postapoc", label: "Постап / космо-рены" },
+  { value: "temple", label: "Храм / святилище" },
+  { value: "ruins", label: "Руины / заброшенное" },
 ];
 
 export default function EventsGeneratorPage() {
@@ -33,12 +35,7 @@ export default function EventsGeneratorPage() {
   }, [seed, context, time, danger]);
 
   return (
-    <AppShell
-      title="Случайные события"
-      kicker="Подкидывает сцену"
-      breadcrumb={[{ href: "/generators", label: "Генераторы" }]}
-      subtitle="Выберите контекст дорогой / подземелья / порта и т.д.; генератор текстом предлагает микроконфликт, но не управляет столом автоматически."
-    >
+    <ForgePage title="Случайные события" kicker="Сцена" subtitle="Контекст, время суток и уровень опасности.">
       <div className="grid gap-6 lg:grid-cols-3">
         <section className="forge-sheet p-6">
           <h2 className="text-lg font-semibold tracking-tight">Фильтры</h2>
@@ -115,11 +112,8 @@ export default function EventsGeneratorPage() {
             </div>
           </div>
 
-          <p className="forge-muted mt-6 text-xs leading-relaxed">
-            Дальше: пользовательские таблицы RollTable и композитор нескольких генераторов в один результат.
-          </p>
         </section>
       </div>
-    </AppShell>
+    </ForgePage>
   );
 }

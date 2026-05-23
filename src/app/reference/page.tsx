@@ -1,14 +1,11 @@
+"use client";
+
 import Link from "next/link";
-import { AppShell } from "@/components/AppShell";
+import { ForgePage } from "@/components/ForgePage";
 
 export default function ReferencePage() {
   return (
-    <AppShell
-      title="Шпаргалка мастера"
-      kicker="D&D 5e · кратко"
-      breadcrumb={[{ href: "/tools", label: "За столом" }]}
-      subtitle="Подсказки для скорости за столом, не официальный текст книги. Спорное — заглянули в свой PDF или PHB."
-    >
+    <ForgePage title="Шпаргалка мастера" kicker="D&D 5e" subtitle="Состояния и быстрые ссылки.">
       <div className="space-y-8 text-sm leading-relaxed">
         <section className="forge-sheet p-6">
           <h2 className="text-base font-semibold tracking-tight">Состояния (что помнить за столом)</h2>
@@ -90,6 +87,6 @@ export default function ReferencePage() {
           </ul>
         </section>
       </div>
-    </AppShell>
+    </ForgePage>
   );
 }

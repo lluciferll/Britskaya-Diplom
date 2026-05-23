@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { getPublicAppOrigin } from "@/lib/appOrigin";
 import { createClient } from "@/lib/supabase/client";
@@ -17,6 +17,23 @@ export default function LoginPage() {
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const [checkingSession, setCheckingSession] = useState(true);
+
+  useEffect(() => {
+    const supabase = createClient();
+    let cancelled = false;
+    void supabase.auth.getSession().then(({ data }) => {
+      if (cancelled) return;
+      if (data.session?.user) {
+        router.replace("/campaigns");
+        return;
+      }
+      setCheckingSession(false);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [router]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -75,6 +92,9 @@ export default function LoginPage() {
       breadcrumb={[{ href: "/", label: "Главная" }]}
       subtitle="Регистрация и вход по e-mail и паролю (настройки — в Supabase). После входа сессия хранится в cookie браузера."
     >
+      {checkingSession ? (
+        <p className="forge-muted mt-6 text-sm">Проверяем сессию…</p>
+      ) : (
       <div className="mt-6 max-w-md space-y-6">
         <div className="flex gap-2">
           <button
@@ -143,6 +163,7 @@ export default function LoginPage() {
           </Link>
         </p>
       </div>
+      )}
     </AppShell>
   );
 }

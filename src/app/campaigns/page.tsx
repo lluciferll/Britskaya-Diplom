@@ -3,12 +3,15 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useRef, useState } from "react";
-import { AppShell } from "@/components/AppShell";
+import { ForgePage } from "@/components/ForgePage";
+import { ForgeBootLoading, useForgeBootReady, useForgeCloudReady } from "@/components/ForgeBootContext";
 import { downloadTextFile } from "@/lib/campaignBackup";
 import { useForgeStore } from "@/store/useForgeStore";
 
 export default function CampaignsPage() {
   const router = useRouter();
+  const bootReady = useForgeBootReady();
+  const cloudReady = useForgeCloudReady();
   const campaigns = useForgeStore((s) => s.campaigns);
   const createCampaign = useForgeStore((s) => s.createCampaign);
   const exportBackupJson = useForgeStore((s) => s.exportBackupJson);
@@ -23,11 +26,16 @@ export default function CampaignsPage() {
   );
 
   return (
-    <AppShell
-      title="Все кампании"
-      kicker="Центральный список"
-      subtitle="Каждая строка — ваша живая кампания: вкладки мира и кнопка на стол мастера. Регулярно скачивайте JSON, если чистите кэш браузера."
-    >
+    <ForgePage title="Все кампании" kicker="Кампании" subtitle="Создание, импорт и экспорт.">
+      {!bootReady ? (
+        <ForgeBootLoading title="Загружаем кампании…" />
+      ) : (
+      <>
+        {!cloudReady && (
+          <p className="forge-muted mb-4 text-xs" aria-live="polite">
+            Синхронизация с облаком…
+          </p>
+        )}
       <div className="grid gap-6 lg:grid-cols-3">
         <section id="campaign-import" className="forge-sheet scroll-mt-28 p-6 lg:col-span-2">
           <div className="flex items-start justify-between gap-4">
@@ -88,14 +96,14 @@ export default function CampaignsPage() {
                 href={`/campaigns/${c.id}`}
                 className="forge-row border-t border-dotted border-[var(--tt-line)] first:border-t-0 hover:bg-[rgba(10,10,10,0.04)]"
               >
-                <div className="flex items-center justify-between gap-3">
+                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
                   <div className="min-w-0">
                     <div className="truncate text-base font-semibold text-[var(--tt-fg)]">{c.title}</div>
                     <div className="forge-muted mt-1 text-xs">
                       {c.system} · Ур. партии {c.partyLevel} · Тон: {c.tone}
                     </div>
                   </div>
-                  <span className="forge-muted shrink-0 text-xs">
+                  <span className="forge-muted shrink-0 text-xs sm:text-right">
                     Обновлено{" "}
                     {new Intl.DateTimeFormat("ru-RU", { dateStyle: "medium", timeStyle: "short" }).format(new Date(c.updatedAt))}
                   </span>
@@ -130,6 +138,8 @@ export default function CampaignsPage() {
           </div>
         </aside>
       </div>
-    </AppShell>
+      </>
+      )}
+    </ForgePage>
   );
 }

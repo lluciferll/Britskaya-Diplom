@@ -22,7 +22,8 @@ function normalizePath(pathname: string | null): string {
   if (clean.startsWith("/session/")) return "/session/:id";
   if (clean.startsWith("/maps/")) return "/maps/:id";
   if (clean.startsWith("/generators/")) return "/generators";
-  if (clean.startsWith("/lore")) return "/lore";
+  if (clean.startsWith("/character-creator")) return "/character-creator";
+  if (clean.startsWith("/atlas")) return "/atlas";
   if (clean.startsWith("/tools")) return "/tools";
   if (clean === "/reference") return "/tools";
   return clean;
@@ -65,7 +66,8 @@ export function AppShell({
   return (
     <div className="min-h-dvh">
       <header className="forge-topbar">
-        <div className="mx-auto max-w-6xl px-4">
+        <div className="mx-auto max-w-6xl px-3 sm:px-4">
+          <div className="forge-nav-scroll">
           <nav className="forge-nav-row text-[10px] sm:text-[11px]" aria-label="Основные разделы">
             {NAV.map((item) => {
               const isActive =
@@ -94,8 +96,9 @@ export function AppShell({
               </button>
             </div>
           </nav>
+          </div>
 
-          <div className="py-8 md:py-10">
+          <div className="py-6 sm:py-8 md:py-10">
             <div className="min-w-0 max-w-3xl">
               <p className="forge-kicker">{kicker ?? "MASTER FORGE"}</p>
               {breadcrumb && breadcrumb.length > 0 && (

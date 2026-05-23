@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { AppShell } from "@/components/AppShell";
+import { ForgePage } from "@/components/ForgePage";
 import { generateShopInventory, type SettlementSize } from "@/lib/shop";
 
 const SIZES: { key: SettlementSize; label: string }[] = [
@@ -17,12 +17,7 @@ export default function ShopGeneratorPage() {
   const [pack, setPack] = useState(() => generateShopInventory(size));
 
   return (
-    <AppShell
-      title="Генератор лавки"
-      kicker="Торговля для мира вашей экономики"
-      breadcrumb={[{ href: "/generators", label: "Генераторы" }]}
-      subtitle="Генерирует импульс ассортимента и текстовые зацепки — не воспроизводит авторские таблицы магической торговли. Редкость магических вещей калибруйте вручную по своей кампании."
-    >
+    <ForgePage title="Лавка / рынок" kicker="Торговля" subtitle="Ассортимент по размеру поселения.">
       <div className="forge-sheet max-w-3xl space-y-6 p-6">
         <label className="block text-sm">
           <span className="forge-label">Размер поселения</span>
@@ -46,9 +41,9 @@ export default function ShopGeneratorPage() {
           </ul>
         </div>
         <p className="forge-muted text-[11px] leading-relaxed">
-          Для интеграции с инвентарём партии используйте вкладку «Партия · книги» внутри кампании — журнал лута и выдачу предметов фиксируйте там же текстом.
+          Инвентарь персонажей — в «Заметках мастера» на вкладке «Персонажи»; журнал наград кампании — в «Обзоре» карточки кампании.
         </p>
       </div>
-    </AppShell>
+    </ForgePage>
   );
 }

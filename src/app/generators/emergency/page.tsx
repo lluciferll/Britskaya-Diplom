@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { AppShell } from "@/components/AppShell";
+import { ForgePage } from "@/components/ForgePage";
 import { generateEmergency } from "@/lib/generators/emergency";
 
 export default function EmergencyPage() {
@@ -20,12 +20,7 @@ export default function EmergencyPage() {
   }, [seed, partyLevel, system]);
 
   return (
-    <AppShell
-      title="Emergency — всё одним блоком"
-      kicker="SOS на столе"
-      breadcrumb={[{ href: "/generators", label: "Генераторы" }]}
-      subtitle="Один случайный пакет: NPC, маленькое событие и крючок — когда нужно «что‑то произойти» немедленно. Не сохраняется автоматически в кампанию; при необходимости перенесите текст вручную."
-    >
+    <ForgePage title="Emergency" kicker="SOS" subtitle="NPC, событие и крючок одним пакетом.">
       <div className="grid gap-6">
         <section className="forge-sheet p-6">
           <div className="flex flex-wrap items-start justify-between gap-4">
@@ -118,6 +113,6 @@ export default function EmergencyPage() {
           </section>
         </div>
       </div>
-    </AppShell>
+    </ForgePage>
   );
 }

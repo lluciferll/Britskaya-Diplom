@@ -3,32 +3,35 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { FORGE_MODULE_IDS, FORGE_MODULE_LABELS, mergeForgeModules, type ForgeModuleId } from "@/domain/forgeModules";
+import {
+  FORGE_MODULE_IDS,
+  FORGE_MODULE_LABELS,
+  HIDDEN_FORGE_MODULE_IDS,
+  mergeForgeModules,
+  type ForgeModuleId,
+} from "@/domain/forgeModules";
 import type { LocationNode } from "@/domain/types";
 import { AppShell } from "@/components/AppShell";
+import { ForgeBootLoading, useForgeBootReady } from "@/components/ForgeBootContext";
 import {
-  CharactersPanel,
   FactionsPanel,
   GalleryPanel,
   LocationsPanel,
-  LogsPanel,
   QuestsPanel,
   TimelinePanel,
 } from "@/components/campaign/campaignPanels";
+import { CharactersPanel } from "@/components/campaign/CharactersPanel";
 import { EncounterLabPanel } from "@/components/campaign/extended/EncounterLabPanel";
 import { LoreGraphCampaignPanel } from "@/components/campaign/extended/LoreGraphCampaignPanel";
-import { PartyBenchPanel } from "@/components/campaign/extended/PartyBenchPanel";
-import { SessionPrepPanel } from "@/components/campaign/extended/SessionPrepPanel";
 import { downloadTextFile } from "@/lib/campaignBackup";
+import { linkWithFrom } from "@/lib/navigation";
 import { useForgeStore } from "@/store/useForgeStore";
 
 type TabKey =
   | "overview"
   | "lore_web"
-  | "session_prep"
   | "encounters"
-  | "party"
-  /** Таймлайн + лог встреч одной вкладкой (модули включаются раздельно в обзоре). */
+  /** Сюжетный таймлайн. */
   | "journal"
   | "factions"
   | "locations"
@@ -39,9 +42,7 @@ type TabKey =
 /** Какую вкладку выключают «жёсткие модули». */
 const TAB_MODULE: Partial<Record<TabKey, ForgeModuleId>> = {
   lore_web: "loreGraph",
-  session_prep: "sessionPlanner",
   encounters: "encounterLab",
-  party: "partyLibrary",
   factions: "factions",
   locations: "locations",
   characters: "characters",
@@ -52,9 +53,7 @@ const TAB_MODULE: Partial<Record<TabKey, ForgeModuleId>> = {
 const TABS: { key: TabKey; label: string }[] = [
   { key: "overview", label: "Обзор" },
   { key: "lore_web", label: "Граф связей" },
-  { key: "session_prep", label: "Планы игр" },
   { key: "encounters", label: "Столкновения" },
-  { key: "party", label: "Партия" },
   { key: "journal", label: "Хроника" },
   { key: "factions", label: "Фракции" },
   { key: "locations", label: "Локации" },
@@ -79,6 +78,7 @@ function locationDepth(loc: LocationNode, all: LocationNode[]): number {
 
 export function CampaignScreen({ campaignId }: { campaignId: string }) {
   const router = useRouter();
+  const bootReady = useForgeBootReady();
   const campaign = useForgeStore((s) => s.campaigns.find((c) => c.id === campaignId) ?? null);
 
   const updateMeta = useForgeStore((s) => s.updateCampaignMeta);
@@ -104,9 +104,6 @@ export function CampaignScreen({ campaignId }: { campaignId: string }) {
   const updateQuest = useForgeStore((s) => s.updateQuest);
   const removeQuest = useForgeStore((s) => s.removeQuest);
 
-  const addLog = useForgeStore((s) => s.addSessionLog);
-  const updateSessionLog = useForgeStore((s) => s.updateSessionLog);
-  const removeLog = useForgeStore((s) => s.removeSessionLog);
 
   const addGallery = useForgeStore((s) => s.addGalleryItem);
   const updateGalleryItem = useForgeStore((s) => s.updateGalleryItem);
@@ -114,6 +111,7 @@ export function CampaignScreen({ campaignId }: { campaignId: string }) {
 
   const exportCampaignJson = useForgeStore((s) => s.exportCampaignJson);
   const patchCampaignModules = useForgeStore((s) => s.patchCampaignModules);
+  const patchCampaignWritings = useForgeStore((s) => s.patchCampaignWritings);
 
   const [tab, setTab] = useState<TabKey>("overview");
 
@@ -133,7 +131,7 @@ export function CampaignScreen({ campaignId }: { campaignId: string }) {
     if (!safeCamp) return TABS;
     const m = safeCamp.modules;
     return TABS.filter((t) => {
-      if (t.key === "journal") return m.timeline !== false || m.sessionLogs !== false;
+      if (t.key === "journal") return m.timeline !== false;
       const mod = TAB_MODULE[t.key];
       if (!mod) return true;
       return m[mod] !== false;
@@ -142,8 +140,6 @@ export function CampaignScreen({ campaignId }: { campaignId: string }) {
 
   const snapshot = useMemo(() => {
     if (!safeCamp) return null;
-    const plans = safeCamp.sessionPlans ?? [];
-    const nextPlan = plans.slice().sort((a, b) => a.narrativeOrder - b.narrativeOrder)[0];
     return {
       locations: safeCamp.locations?.length ?? 0,
       characters: safeCamp.characters?.length ?? 0,
@@ -153,15 +149,14 @@ export function CampaignScreen({ campaignId }: { campaignId: string }) {
       monsters: safeCamp.monsterBlocks?.length ?? 0,
       encounters: safeCamp.encounters?.length ?? 0,
       drops: safeCamp.quickDrops?.length ?? 0,
-      plans: plans.length,
-      nextPlanTitle: nextPlan?.title ?? null,
     };
   }, [safeCamp]);
 
   useEffect(() => {
     if (!safeCamp) return;
     const m = safeCamp.modules;
-    if (tab === "journal" && m.timeline === false && m.sessionLogs === false) setTab("overview");
+    if ((tab as string) === "session_prep" || (tab as string) === "party") setTab("overview");
+    if (tab === "journal" && m.timeline === false) setTab("overview");
     const mod = TAB_MODULE[tab];
     if (mod && m[mod] === false) setTab("overview");
   }, [tab, safeCamp]);
@@ -184,6 +179,14 @@ export function CampaignScreen({ campaignId }: { campaignId: string }) {
       tags: campaign.tags ?? [],
     });
   }, [campaign, campaign?.id, campaign?.updatedAt]);
+
+  if (!bootReady) {
+    return (
+      <AppShell title="Загрузка…" kicker="Кампании" breadcrumb={[{ href: "/campaigns", label: "Все кампании" }]}>
+        <ForgeBootLoading title="Загружаем кампании…" />
+      </AppShell>
+    );
+  }
 
   if (!safeCamp) {
     return (
@@ -239,13 +242,28 @@ export function CampaignScreen({ campaignId }: { campaignId: string }) {
             Кубики, сложность боя, добыча — в «За столом». Генераторы NPC и событий — в «Генераторы».
           </p>
           <div className="mt-5 flex flex-wrap gap-2">
-            <Link href={`/generators/npc?campaign=${campaignId}`} className="forge-btn-outline-ondark">
+            <Link
+              href={linkWithFrom(`/generators/npc?campaign=${campaignId}`, `/campaigns/${campaignId}`, safeCamp.title)}
+              className="forge-btn-outline-ondark"
+            >
               Сгенерировать NPC → в кампанию
             </Link>
-            <Link href="/tools" className="forge-btn-outline-ondark">
-              Кубики и встреча по XP
+            <Link
+              href={linkWithFrom("/tools", `/campaigns/${campaignId}`, safeCamp.title)}
+              className="forge-btn-outline-ondark"
+            >
+              За столом
             </Link>
-            <Link href="/reference" className="forge-btn-outline-ondark">
+            <Link
+              href={linkWithFrom("/tools/encounter", `/campaigns/${campaignId}`, safeCamp.title)}
+              className="forge-btn-outline-ondark"
+            >
+              Встреча по XP
+            </Link>
+            <Link
+              href={linkWithFrom("/reference", `/campaigns/${campaignId}`, safeCamp.title)}
+              className="forge-btn-outline-ondark"
+            >
               Шпаргалка мастера
             </Link>
           </div>
@@ -287,7 +305,7 @@ export function CampaignScreen({ campaignId }: { campaignId: string }) {
               </p>
             </div>
           </div>
-          <div className="mt-5 flex flex-wrap gap-2" role="tablist" aria-label="Разделы карточки кампании">
+          <div className="forge-tab-strip mt-5 md:flex-wrap" role="tablist" aria-label="Разделы карточки кампании">
             {visibleTabs.map((t) => (
               <button
                 key={t.key}
@@ -308,9 +326,6 @@ export function CampaignScreen({ campaignId }: { campaignId: string }) {
             {snapshot && (
               <div className="mb-10 border-b border-dotted border-[var(--tt-line)] pb-10">
                 <h2 className="forge-label mb-4">Снимок кампании</h2>
-                <p className="mb-5 max-w-2xl text-[13px] leading-relaxed forge-muted">
-                  Цифры обновляются сами по спискам ниже. Удобно понять, насколько «набита» карточка, не открывая каждую вкладку.
-                </p>
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                   {[
                     ["Локации", snapshot.locations],
@@ -320,7 +335,6 @@ export function CampaignScreen({ campaignId }: { campaignId: string }) {
                     ["Статблоки", snapshot.monsters],
                     ["Наборы боя", snapshot.encounters],
                     ["Дроп-сцены", snapshot.drops],
-                    ["Планы вечеров", snapshot.plans],
                   ].map(([label, val]) => (
                     <div key={String(label)} className="forge-inset flex flex-col justify-center px-4 py-3">
                       <span className="font-mono text-[10px] uppercase tracking-[0.14em] forge-muted">{label}</span>
@@ -328,48 +342,13 @@ export function CampaignScreen({ campaignId }: { campaignId: string }) {
                     </div>
                   ))}
                 </div>
-                {snapshot.nextPlanTitle ? (
-                  <p className="mt-5 text-[12px] forge-text-soft">
-                    Следующий по порядку план вечера: <strong className="text-[var(--tt-fg)]">{snapshot.nextPlanTitle}</strong> (вкладка «Планы игр»).
-                  </p>
-                ) : (
-                  <p className="mt-5 text-[12px] forge-muted">Пока нет планов вечеров — создайте во вкладке «Планы игр».</p>
-                )}
-                <div className="mt-8 grid gap-4 md:grid-cols-2">
-                  <div className="forge-inset p-4 text-[13px] leading-relaxed forge-text-soft">
-                    <p className="forge-label mb-2">Куда зачем</p>
-                    <ul className="list-disc space-y-2 pl-5">
-                      <li>
-                        <strong className="text-[var(--tt-fg)]">Планы игр</strong> — сцены и заметки на встречу.
-                      </li>
-                      <li>
-                        <strong className="text-[var(--tt-fg)]">Столкновения</strong> — монстры под расчёт сложности.
-                      </li>
-                      <li>
-                        <strong className="text-[var(--tt-fg)]">Партия</strong> — хиты PC, порча/лут, формулировка спасброска для озвучки.
-                      </li>
-                      <li>
-                        <strong className="text-[var(--tt-fg)]">Хроника</strong> — сюжетный таймлайн и краткий лог прошлых игр рядом.
-                      </li>
-                      <li>
-                        <strong className="text-[var(--tt-fg)]">Справка</strong> (меню вверху) — только чтение по SRD.
-                      </li>
-                    </ul>
-                  </div>
-                  <div className="forge-inset p-4 text-[13px] leading-relaxed forge-text-soft">
-                    <p className="forge-label mb-2">Стол</p>
-                    <p>
-                      Карта поселения сохранена в кампании: после правок параметров города они останутся при следующем открытии страницы «Карта города» со страницы кампании или сессии.
-                    </p>
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      <Link href={`/maps/${campaignId}`} className="forge-btn-outline text-[11px] normal-case">
-                        Открыть карту города
-                      </Link>
-                      <Link href="/lore" className="forge-btn-outline text-[11px] normal-case">
-                        Справка SRD
-                      </Link>
-                    </div>
-                  </div>
+                <div className="mt-6 flex flex-wrap gap-2">
+                  <Link href={`/maps/${campaignId}`} className="forge-btn-outline text-[11px] normal-case">
+                    Карта города
+                  </Link>
+                  <Link href="/lore" className="forge-btn-outline text-[11px] normal-case">
+                    Справка SRD
+                  </Link>
                 </div>
               </div>
             )}
@@ -431,10 +410,10 @@ export function CampaignScreen({ campaignId }: { campaignId: string }) {
             <div className="mt-10 border-t border-dotted border-[var(--tt-line-strong)] pt-6">
               <h3 className="forge-label">Что показывать во вкладках</h3>
               <p className="forge-muted mt-2 max-w-2xl text-[12px] leading-relaxed">
-                Выключено — вкладка прячется (для простого стола без графов и т.д.). «Хроника» видна, если включен хотя бы таймлайн или лог встреч.
+                Выключено — вкладка прячется (для простого стола без графов и т.д.). «Хроника» — сюжетный таймлайн кампании.
               </p>
               <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {FORGE_MODULE_IDS.map((mid) => (
+                {FORGE_MODULE_IDS.filter((mid) => !HIDDEN_FORGE_MODULE_IDS.includes(mid)).map((mid) => (
                   <label key={mid} className="flex cursor-pointer gap-3 text-[13px] forge-text-soft">
                     <input
                       type="checkbox"
@@ -484,6 +463,29 @@ export function CampaignScreen({ campaignId }: { campaignId: string }) {
             <p className="mt-4 text-xs forge-muted leading-relaxed">
               JSON включает сессию, карту города, кубики, списки мира и т.д. Импорт — со страницы «Все кампании».
             </p>
+
+            <div className="mt-10 space-y-4 border-t border-dotted border-[var(--tt-line)] pt-8">
+              <h3 className="forge-label">Тексты кампании</h3>
+              <label className="block text-sm">
+                <span className="forge-label normal-case tracking-normal">Домашние правила</span>
+                <textarea
+                  rows={6}
+                  value={safeCamp.houserulesMarkdown}
+                  onChange={(e) => patchCampaignWritings(campaignId, { houserulesMarkdown: e.target.value })}
+                  className="forge-field mt-2 text-xs leading-relaxed"
+                />
+              </label>
+              <label className="block text-sm">
+                <span className="forge-label normal-case tracking-normal">Журнал опыта и наград</span>
+                <textarea
+                  rows={5}
+                  value={safeCamp.lootAndRewardsLog}
+                  onChange={(e) => patchCampaignWritings(campaignId, { lootAndRewardsLog: e.target.value })}
+                  className="forge-field mt-2 font-mono text-xs leading-relaxed"
+                  placeholder="Даты, XP, вдохновение, крупные находки…"
+                />
+              </label>
+            </div>
           </section>
         )}
 
@@ -493,43 +495,20 @@ export function CampaignScreen({ campaignId }: { campaignId: string }) {
           </section>
         )}
 
-        {tab === "session_prep" && (
-          <section className="forge-sheet p-6">
-            <SessionPrepPanel campaignId={campaignId} />
-          </section>
-        )}
-
         {tab === "encounters" && (
           <section className="forge-sheet p-6">
             <EncounterLabPanel campaignId={campaignId} />
           </section>
         )}
 
-        {tab === "party" && (
-          <section className="forge-sheet p-6">
-            <PartyBenchPanel campaignId={campaignId} />
-          </section>
-        )}
-
         {tab === "journal" && (
-          <section className="forge-sheet space-y-12 p-6">
-            {safeCamp.modules.timeline !== false && (
-              <div>
-                <h2 className="forge-label mb-4">Сюжетный таймлайн</h2>
-                <TimelinePanel
-                  entries={safeCamp.timeline}
-                  add={(payload) => addTimeline(campaignId, payload)}
-                  update={(entryId, patch) => updateTimelineEntry(campaignId, entryId, patch)}
-                  remove={(id) => removeTimeline(campaignId, id)}
-                />
-              </div>
-            )}
-            {safeCamp.modules.sessionLogs !== false && (
-              <div>
-                <h2 className="forge-label mb-4">Лог прошлых встреч</h2>
-                <LogsPanel campaignId={campaignId} items={safeCamp.sessionLogs} add={addLog} update={updateSessionLog} remove={removeLog} />
-              </div>
-            )}
+          <section className="forge-sheet p-6">
+            <TimelinePanel
+              entries={safeCamp.timeline}
+              add={(payload) => addTimeline(campaignId, payload)}
+              update={(entryId, patch) => updateTimelineEntry(campaignId, entryId, patch)}
+              remove={(id) => removeTimeline(campaignId, id)}
+            />
           </section>
         )}
 

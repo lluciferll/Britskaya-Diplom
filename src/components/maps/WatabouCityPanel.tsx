@@ -97,7 +97,7 @@ export function WatabouCityPanel({ params: p, onChange }: Props) {
         <a className="underline underline-offset-2" href="https://github.com/watabou" target="_blank" rel="noopener noreferrer">
           watabou
         </a>
-        . Вставка через iframe; если картинка пустая (политика браузера), пользуйтесь кнопкой «Открыть тот же URL» — параметры совпадают.
+        . Если превью пустое — «Открыть тот же URL».
       </p>
 
       <div className="overflow-hidden rounded border border-dotted border-neutral-700 bg-neutral-950/20">

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { AppShell } from "@/components/AppShell";
+import { ForgePage } from "@/components/ForgePage";
 import { generateNpc, type GeneratedNpc } from "@/lib/generators/npc";
 import { useForgeStore } from "@/store/useForgeStore";
 
@@ -32,11 +32,10 @@ export default function NpcGeneratorPage() {
   }, [seed, partyLevel, system]);
 
   return (
-    <AppShell
+    <ForgePage
       title="Генератор NPC"
       kicker="Тексты на лету"
-      breadcrumb={[{ href: "/generators", label: "Генераторы" }]}
-      subtitle="Подставляете уровень и системный намёк — получаете личность с секретами. Кнопка внизу может положить готовый NPC списком в выбранную кампанию."
+      subtitle="Личность с секретами и мотивацией. Можно сохранить в кампанию."
     >
       <div className="grid gap-6 lg:grid-cols-3">
         <section className="forge-sheet p-6 lg:col-span-1">
@@ -75,9 +74,6 @@ export default function NpcGeneratorPage() {
               Случайный seed
             </button>
 
-            <p className="forge-muted text-xs leading-relaxed">
-              Портреты и авто-блоки статов сюда не встраивали — приложение офлайновое и компактное.
-            </p>
           </div>
         </section>
 
@@ -182,6 +178,6 @@ export default function NpcGeneratorPage() {
           </div>
         </section>
       </div>
-    </AppShell>
+    </ForgePage>
   );
 }
