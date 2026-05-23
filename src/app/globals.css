@@ -1,3 +1,10 @@
+@import "@fontsource/jetbrains-mono/400.css";
+@import "@fontsource/jetbrains-mono/cyrillic-400.css";
+@import "@fontsource/pt-serif/400.css";
+@import "@fontsource/pt-serif/700.css";
+@import "@fontsource/pt-serif/cyrillic-400.css";
+@import "@fontsource/pt-serif/cyrillic-700.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -5,6 +12,8 @@
 /* В духе https://www.tooooools.app/ — кремовый фон, моно UI, serif заголовки, пунктир, плоский brutalist */
 
 :root {
+  --font-forge-serif: "PT Serif", ui-serif, Georgia, serif;
+  --font-geist-mono: "JetBrains Mono", ui-monospace, monospace;
   color-scheme: light;
   --tt-bg: #f7f6f2;
   --tt-bg-elev: #f2f1ec;
