@@ -1,7 +1,10 @@
 # Master Forge на Amvera (Docker).
 # Документация: https://docs.amvera.ru/applications/configuration/docker.html
-#
-# Приложение слушает порт 3000 (см. Dockerfile). Amvera по умолчанию ожидает 80.
+
+meta:
+  environment: docker
+  toolchain:
+    name: docker
 
 run:
   containerPort: 3000
