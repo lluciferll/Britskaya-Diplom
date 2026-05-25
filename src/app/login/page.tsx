@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
-import { DEMO_EMAIL_DEFAULT, DEMO_PASSWORD_DEFAULT, getDemoEntryPath, isDemoAccessEnabled } from "@/lib/demoAccess";
+import { PREVIEW_ENTER_PATH, PREVIEW_SESSION_SEEDED, isPreviewModeClient } from "@/lib/previewMode";
 import { getPublicAppOrigin } from "@/lib/appOrigin";
 import { createClient } from "@/lib/supabase/client";
 
@@ -21,6 +21,16 @@ export default function LoginPage() {
   const [checkingSession, setCheckingSession] = useState(true);
 
   useEffect(() => {
+    if (!isPreviewModeClient()) {
+      sessionStorage.removeItem(PREVIEW_SESSION_SEEDED);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isPreviewModeClient()) {
+      window.location.replace(PREVIEW_ENTER_PATH);
+      return;
+    }
     const supabase = createClient();
     let cancelled = false;
     void supabase.auth.getSession().then(({ data }) => {
@@ -158,24 +168,22 @@ export default function LoginPage() {
           </button>
         </form>
 
-        {isDemoAccessEnabled() ? (
-          <div className="forge-sheet space-y-3 p-5">
-            <p className="forge-label">Демо для проверки (диплом)</p>
-            <p className="forge-muted text-[12px] leading-relaxed">
-              Без регистрации — для комиссии и нейросетей с браузером. Текстовый обзор без входа:{" "}
-              <Link href="/obzor" className="text-[var(--tt-fg)] underline underline-offset-2">
-                /obzor
-              </Link>
-              .
-            </p>
-            <p className="font-mono text-[11px] text-[var(--tt-fg)]">
-              {DEMO_EMAIL_DEFAULT} · пароль: {DEMO_PASSWORD_DEFAULT}
-            </p>
-            <Link href={getDemoEntryPath()} className="forge-btn-gold inline-block px-4 py-2 text-[11px] normal-case tracking-normal">
-              Войти в демо одним кликом
+        <div className="forge-sheet space-y-3 p-5">
+          <p className="forge-label">Предпросмотр без регистрации</p>
+          <p className="forge-muted text-[12px] leading-relaxed">
+            Полный интерфейс Master Forge без Supabase — для комиссии и нейросетей с браузером. Данные только в этом
+            браузере, в облако не сохраняются.
+          </p>
+          <Link href={PREVIEW_ENTER_PATH} className="forge-btn-gold inline-block w-full px-4 py-3 text-center text-[11px] normal-case tracking-normal">
+            Открыть предпросмотр
+          </Link>
+          <p className="forge-muted text-[11px]">
+            Только текст (без JS):{" "}
+            <Link href="/obzor" className="underline underline-offset-2">
+              /obzor
             </Link>
-          </div>
-        ) : null}
+          </p>
+        </div>
 
         <p className="forge-muted text-[12px]">
           <Link href="/" className="underline underline-offset-2">

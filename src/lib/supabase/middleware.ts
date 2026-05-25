@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import type { CookieOptions } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
+import { isPreviewRequestCookie, PREVIEW_COOKIE } from "@/lib/previewMode";
 import { supabaseCookieOptions } from "@/lib/supabase/cookieOptions";
 
 /** Маршруты Supabase OAuth / экран ошибки — должны быть доступны без JWT. */
@@ -10,6 +11,8 @@ function isPublicAuthRoute(pathname: string) {
     pathname === "/demo" ||
     pathname === "/obzor" ||
     pathname === "/api/demo-login" ||
+    pathname === "/api/preview-enter" ||
+    pathname === "/api/preview-exit" ||
     pathname.startsWith("/auth/callback") ||
     pathname.startsWith("/auth/auth-code-error")
   );
@@ -60,6 +63,17 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const pathname = request.nextUrl.pathname;
+  const previewBypass = isPreviewRequestCookie(request.cookies.get(PREVIEW_COOKIE)?.value);
+
+  if (previewBypass) {
+    if (pathname === "/login" || pathname === "/demo") {
+      const redirectUrl = request.nextUrl.clone();
+      redirectUrl.pathname = "/";
+      redirectUrl.hash = "";
+      return NextResponse.redirect(redirectUrl);
+    }
+    return supabaseResponse;
+  }
 
   if (!user && !isPublicAuthRoute(pathname)) {
     return redirectWithSession(request, supabaseResponse, "/login");

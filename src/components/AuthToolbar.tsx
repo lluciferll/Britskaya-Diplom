@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { clearForgeLocalCampaignData } from "@/lib/forgeLocalAuth";
+import { PREVIEW_ENTER_PATH, PREVIEW_EXIT_PATH, isPreviewModeClient } from "@/lib/previewMode";
 import { createClient } from "@/lib/supabase/client";
 
 export function AuthToolbar() {
@@ -11,8 +12,14 @@ export function AuthToolbar() {
   const [email, setEmail] = useState<string | null>(null);
   const [sessionKnown, setSessionKnown] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [preview, setPreview] = useState(false);
 
   useEffect(() => {
+    setPreview(isPreviewModeClient());
+  }, []);
+
+  useEffect(() => {
+    if (preview) return;
     const supabase = createClient();
     let cancelled = false;
 
@@ -33,7 +40,23 @@ export function AuthToolbar() {
       cancelled = true;
       subscription.unsubscribe();
     };
-  }, []);
+  }, [preview]);
+
+  if (preview) {
+    return (
+      <span className="flex shrink-0 items-center gap-2">
+        <span className="forge-nav-btn shrink-0 cursor-default opacity-90" title="Без Supabase">
+          Предпросмотр
+        </span>
+        <Link href={PREVIEW_EXIT_PATH} className="forge-nav-btn shrink-0">
+          Выйти
+        </Link>
+        <Link href="/login" className="forge-nav-btn shrink-0">
+          Вход
+        </Link>
+      </span>
+    );
+  }
 
   async function signOut() {
     setBusy(true);
@@ -59,9 +82,14 @@ export function AuthToolbar() {
 
   if (!email) {
     return (
-      <Link href="/login" className="forge-nav-btn shrink-0" title="Вход или регистрация">
-        Вход
-      </Link>
+      <span className="flex shrink-0 items-center gap-2">
+        <Link href={PREVIEW_ENTER_PATH} className="forge-nav-btn shrink-0" title="Весь интерфейс без регистрации">
+          Предпросмотр
+        </Link>
+        <Link href="/login" className="forge-nav-btn shrink-0" title="Вход или регистрация">
+          Вход
+        </Link>
+      </span>
     );
   }
 

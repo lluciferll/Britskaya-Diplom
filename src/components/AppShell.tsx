@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { AuthToolbar } from "@/components/AuthToolbar";
+import { PreviewBanner } from "@/components/PreviewBanner";
 import { CommandPalette } from "@/components/CommandPalette";
 
 const NAV = [
@@ -65,6 +66,7 @@ export function AppShell({
 
   return (
     <div className="min-h-dvh">
+      <PreviewBanner />
       <header className="forge-topbar">
         <div className="mx-auto max-w-6xl px-3 sm:px-4">
           <div className="forge-nav-scroll">

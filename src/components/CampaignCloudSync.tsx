@@ -13,6 +13,8 @@ import {
   wipeForgeCampaignsPersistAndMemory,
   writeLastSyncedAuthUid,
 } from "@/lib/forgeLocalAuth";
+import { isPreviewModeClient, PREVIEW_SESSION_SEEDED } from "@/lib/previewMode";
+import { getPreviewSeedCampaigns } from "@/lib/previewSeed";
 import { deleteCampaignRow, fetchCampaignPayloads, upsertCampaignRow } from "@/lib/supabase/campaignRows";
 import { createClient } from "@/lib/supabase/client";
 import { waitForForgeStoreHydrated } from "@/lib/waitForForgeStoreHydrated";
@@ -76,6 +78,26 @@ export function CampaignCloudSync({ children }: { children: ReactNode }) {
   }
 
   useEffect(() => {
+    if (isPreviewModeClient()) {
+      let cancelled = false;
+      void (async () => {
+        await waitForForgeStoreHydrated();
+        if (cancelled) return;
+        if (!sessionStorage.getItem(PREVIEW_SESSION_SEEDED)) {
+          wipeForgeCampaignsPersistAndMemory();
+          clearAllCampaignDeletedTombstones();
+          useForgeStore.setState({ campaigns: getPreviewSeedCampaigns() });
+          sessionStorage.setItem(PREVIEW_SESSION_SEEDED, "1");
+        } else if (useForgeStore.getState().campaigns.length === 0) {
+          useForgeStore.setState({ campaigns: getPreviewSeedCampaigns() });
+        }
+        setCloudReady(true);
+      })();
+      return () => {
+        cancelled = true;
+      };
+    }
+
     const sb = createClient();
     let cancelled = false;
 
@@ -159,6 +181,7 @@ export function CampaignCloudSync({ children }: { children: ReactNode }) {
 
     const unsub = useForgeStore.subscribe((state) => {
       if (suppressSync.current) return;
+      if (isPreviewModeClient()) return;
       const userId = userIdRef.current;
       if (!userId) return;
 

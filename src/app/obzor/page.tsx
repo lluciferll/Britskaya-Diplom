@@ -1,14 +1,12 @@
 import Link from "next/link";
 import { AppShell } from "@/components/AppShell";
-import { DEMO_EMAIL_DEFAULT, DEMO_PASSWORD_DEFAULT, getDemoEntryPath } from "@/lib/demoAccess";
+import { PREVIEW_ENTER_PATH } from "@/lib/previewMode";
 
 /**
  * Публичная страница без авторизации — для нейросетей и проверяющих,
  * которые не выполняют JavaScript и не проходят форму входа.
  */
 export default function ObzorPage() {
-  const demoUrl = getDemoEntryPath();
-
   return (
     <AppShell
       title="Обзор Master Forge"
@@ -55,23 +53,18 @@ export default function ObzorPage() {
         </section>
 
         <section className="forge-sheet p-6">
-          <h2 className="forge-label">Как открыть интерактивный интерфейс</h2>
+          <h2 className="forge-label">Как открыть весь интерфейс без регистрации</h2>
           <p className="forge-muted mt-3">
-            Основные разделы защищены входом по e-mail (Supabase Auth). Для проверки без регистрации используйте демо-вход:
+            Режим предпросмотра не использует Supabase: одна ссылка включает cookie и открывает приложение с демо-кампанией.
           </p>
           <p className="mt-4 font-mono text-[13px] text-[var(--tt-fg)]">
-            Ссылка:{" "}
-            <Link href={demoUrl} className="underline underline-offset-2">
-              {demoUrl}
+            <Link href={PREVIEW_ENTER_PATH} className="underline underline-offset-2">
+              {PREVIEW_ENTER_PATH}
             </Link>
           </p>
           <p className="forge-muted mt-3 text-[12px]">
-            Учётная запись по умолчанию: <code>{DEMO_EMAIL_DEFAULT}</code> / <code>{DEMO_PASSWORD_DEFAULT}</code> (создаётся
-            один раз в Supabase → Authentication → Users).
-          </p>
-          <p className="forge-muted mt-3 text-[12px]">
-            Нейросети без браузера и cookie могут анализировать этот текстовый обзор. С браузером — откройте ссылку демо-входа
-            выше.
+            Для ChatGPT с браузером: откройте эту ссылку, затем переходите по разделам (Кампании, Справка, Генераторы и т.д.).
+            Страница <code>/login</code> — только регистрация; предпросмотр — по ссылке выше.
           </p>
         </section>
 
@@ -87,8 +80,8 @@ export default function ObzorPage() {
             Вход
           </Link>
           {" · "}
-          <Link href={demoUrl} className="underline underline-offset-2">
-            Демо
+          <Link href={PREVIEW_ENTER_PATH} className="underline underline-offset-2">
+            Предпросмотр
           </Link>
         </p>
       </article>
