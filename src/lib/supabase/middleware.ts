@@ -7,6 +7,9 @@ import { supabaseCookieOptions } from "@/lib/supabase/cookieOptions";
 function isPublicAuthRoute(pathname: string) {
   return (
     pathname === "/login" ||
+    pathname === "/demo" ||
+    pathname === "/obzor" ||
+    pathname === "/api/demo-login" ||
     pathname.startsWith("/auth/callback") ||
     pathname.startsWith("/auth/auth-code-error")
   );

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
+import { DEMO_EMAIL_DEFAULT, DEMO_PASSWORD_DEFAULT, getDemoEntryPath, isDemoAccessEnabled } from "@/lib/demoAccess";
 import { getPublicAppOrigin } from "@/lib/appOrigin";
 import { createClient } from "@/lib/supabase/client";
 
@@ -157,9 +158,32 @@ export default function LoginPage() {
           </button>
         </form>
 
+        {isDemoAccessEnabled() ? (
+          <div className="forge-sheet space-y-3 p-5">
+            <p className="forge-label">Демо для проверки (диплом)</p>
+            <p className="forge-muted text-[12px] leading-relaxed">
+              Без регистрации — для комиссии и нейросетей с браузером. Текстовый обзор без входа:{" "}
+              <Link href="/obzor" className="text-[var(--tt-fg)] underline underline-offset-2">
+                /obzor
+              </Link>
+              .
+            </p>
+            <p className="font-mono text-[11px] text-[var(--tt-fg)]">
+              {DEMO_EMAIL_DEFAULT} · пароль: {DEMO_PASSWORD_DEFAULT}
+            </p>
+            <Link href={getDemoEntryPath()} className="forge-btn-gold inline-block px-4 py-2 text-[11px] normal-case tracking-normal">
+              Войти в демо одним кликом
+            </Link>
+          </div>
+        ) : null}
+
         <p className="forge-muted text-[12px]">
           <Link href="/" className="underline underline-offset-2">
             На главную
+          </Link>
+          {" · "}
+          <Link href="/obzor" className="underline underline-offset-2">
+            Обзор проекта
           </Link>
         </p>
       </div>
