@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import type { CookieOptions } from "@supabase/ssr";
+import { publicUrl } from "@/lib/appOrigin";
 import { getDemoCredentials, isDemoAccessEnabled } from "@/lib/demoAccess";
 import { supabaseCookieOptions } from "@/lib/supabase/cookieOptions";
 import { type NextRequest, NextResponse } from "next/server";
@@ -9,7 +10,6 @@ import { type NextRequest, NextResponse } from "next/server";
  * Для проверяющих и нейросетей с поддержкой cookie/редиректов.
  */
 export async function GET(request: NextRequest) {
-  const origin = request.nextUrl.origin;
   if (!isDemoAccessEnabled()) {
     return NextResponse.json({ error: "Демо-вход отключён" }, { status: 404 });
   }
@@ -21,8 +21,7 @@ export async function GET(request: NextRequest) {
 
   const nextSearch = request.nextUrl.searchParams.get("next");
   const nextPath = nextSearch && nextSearch.startsWith("/") ? nextSearch : "/campaigns";
-  const redirectUrl = new URL(nextPath, origin);
-  const response = NextResponse.redirect(redirectUrl);
+  const response = NextResponse.redirect(publicUrl(request, nextPath));
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -51,7 +50,7 @@ export async function GET(request: NextRequest) {
   });
 
   if (error) {
-    const errUrl = new URL("/demo", origin);
+    const errUrl = publicUrl(request, "/demo");
     errUrl.searchParams.set("error", error.message);
     return NextResponse.redirect(errUrl);
   }

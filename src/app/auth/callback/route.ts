@@ -1,15 +1,14 @@
 import { createServerClient } from "@supabase/ssr";
 import type { CookieOptions } from "@supabase/ssr";
+import { publicUrl } from "@/lib/appOrigin";
 import { supabaseCookieOptions } from "@/lib/supabase/cookieOptions";
 import { type NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
-  const origin = request.nextUrl.origin;
   const nextSearch = request.nextUrl.searchParams.get("next");
   const nextPath = nextSearch && nextSearch.startsWith("/") ? nextSearch : "/campaigns";
 
-  const redirectUrl = new URL(nextPath, origin);
-  const response = NextResponse.redirect(redirectUrl);
+  const response = NextResponse.redirect(publicUrl(request, nextPath));
 
   // Route handlers: deprecated get/set/remove overload чётко выбирается TypeScript’ом
   // (getAll/setAll дают конфликт перегрузок в этой версии @supabase/ssr).
@@ -30,12 +29,12 @@ export async function GET(request: NextRequest) {
 
   const code = request.nextUrl.searchParams.get("code");
   if (!code) {
-    return NextResponse.redirect(new URL("/auth/auth-code-error", origin));
+    return NextResponse.redirect(publicUrl(request, "/auth/auth-code-error"));
   }
 
   const { error } = await supabase.auth.exchangeCodeForSession(code);
   if (error) {
-    const errUrl = new URL("/auth/auth-code-error", origin);
+    const errUrl = publicUrl(request, "/auth/auth-code-error");
     errUrl.searchParams.set("reason", error.message);
     return NextResponse.redirect(errUrl);
   }

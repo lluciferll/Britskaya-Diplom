@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import type { CookieOptions } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
+import { publicUrl } from "@/lib/appOrigin";
 import { isPreviewRequestCookie, PREVIEW_COOKIE } from "@/lib/previewMode";
 import { supabaseCookieOptions } from "@/lib/supabase/cookieOptions";
 
@@ -20,8 +21,7 @@ function isPublicAuthRoute(pathname: string) {
 
 /** Чтобы после redirect JWT-куки не потерялись — переносим Set-Cookie из ответа Supabase. */
 function redirectWithSession(request: NextRequest, supabaseResponse: NextResponse, pathname: string) {
-  const redirectUrl = request.nextUrl.clone();
-  redirectUrl.pathname = pathname;
+  const redirectUrl = publicUrl(request, pathname);
   redirectUrl.hash = "";
   return NextResponse.redirect(redirectUrl, {
     headers: supabaseResponse.headers,
@@ -67,8 +67,7 @@ export async function updateSession(request: NextRequest) {
 
   if (previewBypass) {
     if (pathname === "/login" || pathname === "/demo") {
-      const redirectUrl = request.nextUrl.clone();
-      redirectUrl.pathname = "/";
+      const redirectUrl = publicUrl(request, "/");
       redirectUrl.hash = "";
       return NextResponse.redirect(redirectUrl);
     }
