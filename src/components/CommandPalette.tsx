@@ -10,7 +10,6 @@ const SECTIONS: { heading: string; links: PaletteLink[] }[] = [
     heading: "Навигация",
     links: [
       { href: "/", label: "Главная", hint: "на старт" },
-      { href: "/api/preview-enter", label: "Предпросмотр", hint: "весь сайт без регистрации" },
       { href: "/login", label: "Вход", hint: "аккаунт Supabase" },
       { href: "/campaigns", label: "Все кампании", hint: "список и бэкапы" },
       { href: "/lore", label: "Справка SRD", hint: "разделы и поиск, русский SRD" },
