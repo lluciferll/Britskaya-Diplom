@@ -1,5 +1,6 @@
 # Master Forge на Amvera (Docker).
 # Документация: https://docs.amvera.ru/applications/configuration/docker.html
+# deploy: restore-ui-texts-2026-05-24
 
 meta:
   environment: docker
